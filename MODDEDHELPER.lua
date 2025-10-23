@@ -4424,7 +4424,13 @@ local function var_0_189(arg_127_0, arg_127_1)
 			local var_127_seen = {}
 			for iter_127_12 = #iter_127_11, 1, -1 do
 				local var_127_loc = iter_127_11[iter_127_12]
-				local var_127_key = tostring(var_127_loc.position) .. "_" .. tostring(var_127_loc.viewangles.pitch) .. "_" .. tostring(var_127_loc.viewangles.yaw) .. "_" .. (var_127_loc.type or "")
+				local var_127_weapons_str = ""
+				if var_127_loc.weapons ~= nil then
+					for iter_127_w = 1, #var_127_loc.weapons do
+						var_127_weapons_str = var_127_weapons_str .. tostring(var_127_loc.weapons[iter_127_w].console_name or "")
+					end
+				end
+				local var_127_key = tostring(var_127_loc.position) .. "_" .. tostring(var_127_loc.viewangles.pitch) .. "_" .. tostring(var_127_loc.viewangles.yaw) .. "_" .. (var_127_loc.type or "") .. "_" .. var_127_weapons_str
 				if var_127_seen[var_127_key] ~= nil then
 					table.remove(iter_127_11, iter_127_12)
 				else
