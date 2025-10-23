@@ -2392,6 +2392,13 @@ local var_0_150 = {
 	to = ui.new_textbox("LUA", "B", "To"),
 	description_label = ui.new_label("LUA", "B", "Description (Optional)"),
 	description = ui.new_textbox("LUA", "B", "To"),
+	wallbang_weapons = ui.new_multiselect("LUA", "B", "Wallbang Weapons", {
+		"AWP",
+		"SSG 08",
+		"SCAR-20",
+		"G3SG1",
+		"Revolver"
+	}),
 	grenade_properties = ui.new_multiselect("LUA", "B", "Grenade Properties", {
 		"Jump",
 		"Run",
@@ -2698,7 +2705,15 @@ function var_0_99()
 			var_93_0[var_0_150.to] = true
 			var_93_0[var_0_150.description_label] = true
 			var_93_0[var_0_150.description] = true
-			var_93_0[var_0_150.grenade_properties] = true
+			
+			if var_93_15 == "Wallbang" then
+				var_93_0[var_0_150.wallbang_weapons] = true
+			end
+			
+			if var_93_15 == "Grenade" then
+				var_93_0[var_0_150.grenade_properties] = true
+			end
+			
 			var_93_0[var_93_15 == "Movement" and var_0_150.record_label or var_0_150.set] = true
 			var_93_0[var_0_150.set_hotkey] = true
 			var_93_0[var_0_150.teleport] = true
@@ -3271,6 +3286,7 @@ function var_0_100(arg_111_0)
 	ui.set(var_0_150.from, var_111_0.name and var_111_0.name[1] or "")
 	ui.set(var_0_150.to, var_111_0.name and var_111_0.name[2] or "")
 	ui.set(var_0_150.grenade_properties, {})
+	ui.set(var_0_150.wallbang_weapons, {})
 	ui.set(var_0_150.description, var_111_0.description or "")
 
 	if var_0_153 then
@@ -3357,6 +3373,27 @@ function var_0_100(arg_111_0)
 		-- block empty
 	else
 		ui.set(var_0_150.grenade_properties, {})
+	end
+	
+	if var_111_2 ~= nil and var_111_2.type == "wallbang" and var_111_0.weapon ~= nil then
+		local var_111_4 = {
+			weapon_awp = "AWP",
+			weapon_ssg08 = "SSG 08",
+			weapon_scar20 = "SCAR-20",
+			weapon_g3sg1 = "G3SG1",
+			weapon_revolver = "Revolver"
+		}
+		local var_111_5 = {}
+		local var_111_6 = type(var_111_0.weapon) == "table" and var_111_0.weapon or {var_111_0.weapon}
+		
+		for iter_111_0 = 1, #var_111_6 do
+			local var_111_7 = var_111_4[var_111_6[iter_111_0]]
+			if var_111_7 ~= nil then
+				table.insert(var_111_5, var_111_7)
+			end
+		end
+		
+		ui.set(var_0_150.wallbang_weapons, var_111_5)
 	end
 
 	var_0_152 = false
@@ -3483,6 +3520,28 @@ local function var_0_177()
 		if var_113_0.grenade ~= nil and next(var_113_0.grenade) == nil then
 			var_113_0.grenade = nil
 		end
+		
+		local var_113_10 = ui.get(var_0_150.type)
+		if var_113_10 == "Wallbang" then
+			local var_113_11 = {
+				["AWP"] = "weapon_awp",
+				["SSG 08"] = "weapon_ssg08",
+				["SCAR-20"] = "weapon_scar20",
+				["G3SG1"] = "weapon_g3sg1",
+				["Revolver"] = "weapon_revolver"
+			}
+			local var_113_12 = ui.get(var_0_150.wallbang_weapons)
+			if #var_113_12 > 0 then
+				local var_113_13 = {}
+				for iter_113_0 = 1, #var_113_12 do
+					local var_113_14 = var_113_11[var_113_12[iter_113_0]]
+					if var_113_14 ~= nil then
+						table.insert(var_113_13, var_113_14)
+					end
+				end
+				var_113_0.weapon = #var_113_13 > 1 and var_113_13 or var_113_13[1]
+			end
+		end
 
 		var_0_176()
 		var_0_103("edit_update_has_changed")
@@ -3491,6 +3550,7 @@ local function var_0_177()
 	var_0_99()
 end
 
+ui.set_callback(var_0_150.wallbang_weapons, var_0_177)
 ui.set_callback(var_0_150.grenade_properties, var_0_177)
 ui.set_callback(var_0_150.run_direction, var_0_177)
 ui.set_callback(var_0_150.run_direction_custom, var_0_177)
@@ -3534,11 +3594,18 @@ function var_0_147()
 			local var_117_1 = entity.get_local_player()
 
 			if var_117_0.weapon ~= nil and var_117_1 ~= nil and entity.is_alive(var_117_1) then
+				local var_117_weapons = type(var_117_0.weapon) == "table" and var_117_0.weapon or {var_117_0.weapon}
 				for iter_117_0 = 0, 64 do
 					local var_117_2 = var_0_1(entity.get_prop(var_117_1, "m_hMyWeapons", iter_117_0))
-
-					if var_117_2 ~= nil and (var_0_18[var_117_2] ~= nil and var_0_18[var_117_2].console_name or var_117_2.console_name) == var_117_0.weapon then
-						client.exec("use ", var_117_2.console_name)
+					local var_117_2_name = var_117_2 ~= nil and (var_0_18[var_117_2] ~= nil and var_0_18[var_117_2].console_name or var_117_2.console_name) or nil
+					
+					if var_117_2_name ~= nil then
+						for iter_117_1 = 1, #var_117_weapons do
+							if var_117_2_name == var_117_weapons[iter_117_1] then
+								client.exec("use ", var_117_2.console_name)
+								break
+							end
+						end
 					end
 				end
 			end
@@ -3603,7 +3670,31 @@ function var_0_148()
 				var_119_0.fakeduck = true
 			end
 
-			var_119_0.weapon = var_119_3.console_name
+			local var_119_6 = ui.get(var_0_150.type)
+			if var_119_6 == "Wallbang" then
+				local var_119_7 = {
+					["AWP"] = "weapon_awp",
+					["SSG 08"] = "weapon_ssg08",
+					["SCAR-20"] = "weapon_scar20",
+					["G3SG1"] = "weapon_g3sg1",
+					["Revolver"] = "weapon_revolver"
+				}
+				local var_119_8 = ui.get(var_0_150.wallbang_weapons)
+				if #var_119_8 > 0 then
+					local var_119_9 = {}
+					for iter_119_0 = 1, #var_119_8 do
+						local var_119_10 = var_119_7[var_119_8[iter_119_0]]
+						if var_119_10 ~= nil then
+							table.insert(var_119_9, var_119_10)
+						end
+					end
+					var_119_0.weapon = #var_119_9 > 1 and var_119_9 or var_119_9[1]
+				else
+					var_119_0.weapon = var_119_3.console_name
+				end
+			else
+				var_119_0.weapon = var_119_3.console_name
+			end
 		end
 
 		var_0_176()
@@ -3963,9 +4054,14 @@ local function var_0_188()
 		end
 
 		if var_124_2.weapon ~= nil then
-			local var_124_26 = var_0_1[var_124_2.weapon]
+			local var_124_26
+			if type(var_124_2.weapon) == "table" then
+				var_124_26 = var_0_1[var_124_2.weapon[1]]
+			else
+				var_124_26 = var_0_1[var_124_2.weapon]
+			end
 
-			if var_124_26.type == "grenade" then
+			if var_124_26 ~= nil and var_124_26.type == "grenade" then
 				local var_124_27 = var_0_64(ui.get(var_0_139), function(arg_126_0, arg_126_1)
 					return arg_126_1, true
 				end)
@@ -4693,7 +4789,14 @@ local function var_0_199()
 						if var_131_82.type == "movement" and var_131_82.weapons[1].type ~= "grenade" then
 							var_131_81 = var_0_47.bhop
 						else
-							var_131_81 = var_0_16[var_131_37[1].weapons[1]]
+							local var_131_current_weapon = var_131_2
+							local var_131_weapon_to_show = var_131_37[1].weapons[1]
+							
+							if var_131_82.type == "wallbang" and var_131_82.weapons_assoc[var_131_current_weapon] then
+								var_131_weapon_to_show = var_131_current_weapon
+							end
+							
+							var_131_81 = var_0_16[var_131_weapon_to_show]
 						end
 
 						local var_131_83
